@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MemoryBox
 
-## Getting Started
+A secure journaling application using Next.js and Supabase.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  **Framework Setup**:
+    The project is already initialized with Next.js, Tailwind CSS, and TypeScript.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2.  **Environment Variables**:
+    Rename `.env.local.example` to `.env.local` and add your keys from the Supabase Dashboard:
+    ```bash
+    cp .env.local.example .env.local
+    ```
+    Then edit `.env.local`:
+    ```
+    NEXT_PUBLIC_SUPABASE_URL=your-project-url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+    ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3.  **Supabase Database Setup**:
+    Run the following SQL in your Supabase SQL Editor to create the entries table:
+    ```sql
+    create table entries (
+      id uuid default uuid_generate_v4() primary key,
+      user_id uuid references auth.users not null,
+      content text,
+      created_at timestamp with time zone default timezone('utc'::text, now()) not null
+    );
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+    alter table entries enable row level security;
 
-## Learn More
+    create policy "Users can create their own entries"
+    on entries for insert
+    with check ( auth.uid() = user_id );
 
-To learn more about Next.js, take a look at the following resources:
+    create policy "Users can view their own entries"
+    on entries for select
+    using ( auth.uid() = user_id );
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4.  **Run the App**:
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+-   **Frontend**: Next.js 14 (App Router)
+-   **Styling**: Tailwind CSS
+-   **Backend**: Supabase (Auth & Database)
+-   **Language**: TypeScript
